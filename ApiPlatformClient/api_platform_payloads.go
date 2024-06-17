@@ -8,3 +8,8 @@ type ApiPlatformTokenResponse struct {
 	Node        string `json:"node"`
 	Jti         string `json:"jti"` // Unknown
 }
+
+type ApiPlatformSignBlockResHeaderResponse struct {
+	ReturnCode    string
+	ReturnMessage string
+}
