@@ -10,6 +10,6 @@ type ApiPlatformTokenResponse struct {
 }
 
 type ApiPlatformSignBlockResHeaderResponse struct {
-	ReturnCode    string
-	ReturnMessage string
+	ReturnCode    string `json:"rtnCode"`
+	ReturnMessage string `json:"rtnMsg"`
 }
