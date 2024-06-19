@@ -13,3 +13,7 @@ type ApiPlatformSignBlockResHeaderResponse struct {
 	ReturnCode    string `json:"rtnCode"`
 	ReturnMessage string `json:"rtnMsg"`
 }
+
+type ApiPlatformSignBlockResResponse struct {
+	SignBlock string
+}
