@@ -15,5 +15,5 @@ type ApiPlatformSignBlockResHeaderResponse struct {
 }
 
 type ApiPlatformSignBlockResResponse struct {
-	SignBlock string
+	SignBlock string `json:"signBlock"`
 }
