@@ -19,6 +19,6 @@ type ApiPlatformSignBlockResResponse struct {
 }
 
 type ApiPlatformSignBlockResponse struct {
-	ResponseHeader    ApiPlatformSignBlockResHeaderResponse
-	ResponseSignBlock ApiPlatformSignBlockResResponse
+	ResponseHeader    ApiPlatformSignBlockResHeaderResponse `json:"ResHeader"`
+	ResponseSignBlock ApiPlatformSignBlockResResponse       `json:"Res_getSignBlock"`
 }
