@@ -2,7 +2,10 @@ package api_platform_client
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
 )
 
 // # API Platform Client Struct
@@ -14,6 +17,42 @@ type ApiPlatformClient struct {
 	ClientTokenBlock string
 	accessToken      string // `accessToken` is generated during runtime.
 	signBlock        string // `signBlock` is generated during runtime.
+}
+
+// # Request `accessToken` from API Platform.
+//
+// This function is used to request a `accessToken` from API Platform.
+// Note that every token is expired after a day.
+func (client *ApiPlatformClient) RequestAccessToken() (string, error) {
+	endpointAccessToken := fmt.Sprintf("%s/tsmpaa/oauth/token", client.EndpointURL)
+
+	header := http.Header{}
+	header.Set("Content-Type", "application/x-www-form-urlencoded")
+	header.Set("Authorization", "Basic "+basicAuthCredentialCrafter(client.ClientID, client.ClientTokenBlock))
+
+	payload := url.Values{}
+	payload.Set("grant_type", "client_credentials")
+
+	resp, err := http.PostForm(endpointAccessToken, payload)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusUnauthorized {
+			return "", ErrInvalidCredential
+		}
+		return "", ErrApiPlatformGeneralError
+	}
+
+	tokenResponse := new(ApiPlatformTokenResponse)
+	if err := json.NewDecoder(resp.Body).Decode(tokenResponse); err != nil {
+		return "", err
+	}
+
+	client.accessToken = tokenResponse.AccessToken
+	return client.accessToken, nil
 }
 
 // # Payload Crafter for HTTP Basic Auth
