@@ -1,6 +1,7 @@
 package api_platform_client
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -53,6 +54,12 @@ func (client *ApiPlatformClient) RequestAccessToken() (string, error) {
 
 	client.accessToken = tokenResponse.AccessToken
 	return client.accessToken, nil
+}
+
+func (client *ApiPlatformClient) SignPayload(data []byte) string {
+	signBody := append([]byte(client.signBlock), data...)
+	signature := sha256.Sum256(signBody)
+	return fmt.Sprintf("%x", signature)
 }
 
 // # Payload Crafter for HTTP Basic Auth
