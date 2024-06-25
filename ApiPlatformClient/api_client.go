@@ -56,6 +56,42 @@ func (client *ApiPlatformClient) RequestAccessToken() (string, error) {
 	return client.accessToken, nil
 }
 
+func (client *ApiPlatformClient) RequestSignBlock() (string, error) {
+	if client.accessToken == "" {
+		return "", ErrClientUnauthorized
+	}
+
+	endpointSB := fmt.Sprintf("%s/tsmpaa/getSignBlock", client.EndpointURL)
+
+	req, err := http.NewRequest("GET", endpointSB, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+client.accessToken)
+
+	clientHTTP := &http.Client{}
+	resp, err := clientHTTP.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusUnauthorized {
+			return "", ErrInvalidCredential
+		}
+		return "", ErrApiPlatformGeneralError
+	}
+
+	sbResponse := new(ApiPlatformSignBlockResponse)
+	if err := json.NewDecoder(resp.Body).Decode(sbResponse); err != nil {
+		return "", err
+	}
+
+	client.signBlock = sbResponse.ResponseSignBlock.SignBlock
+	return client.signBlock, nil
+}
+
 func (client *ApiPlatformClient) SignPayload(data []byte) string {
 	signBody := append([]byte(client.signBlock), data...)
 	signature := sha256.Sum256(signBody)
