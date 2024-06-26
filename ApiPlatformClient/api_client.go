@@ -1,6 +1,7 @@
 package api_platform_client
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -96,6 +97,38 @@ func (client *ApiPlatformClient) SignPayload(data []byte) string {
 	signBody := append([]byte(client.signBlock), data...)
 	signature := sha256.Sum256(signBody)
 	return fmt.Sprintf("%x", signature)
+}
+
+func (client *ApiPlatformClient) SendRequest(endpoint, method string, headers map[string]string, jsonPayload, data interface{}) (*http.Response, error) {
+	if client.accessToken == "" {
+		return nil, ErrClientUnauthorized
+	}
+
+	if client.signBlock == "" {
+		return nil, ErrClientUnauthorized
+	}
+
+	jsonData, err := json.Marshal(jsonPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	signature := client.SignPayload(jsonData)
+
+	req, err := http.NewRequest(method, endpoint, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+client.accessToken)
+	req.Header.Set("SignCode", signature)
+
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	clientHTTP := &http.Client{}
+	return clientHTTP.Do(req)
 }
 
 // # Payload Crafter for HTTP Basic Auth
