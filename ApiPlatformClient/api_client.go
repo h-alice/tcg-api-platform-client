@@ -131,6 +131,14 @@ func (client *ApiPlatformClient) SendRequest(endpoint, method string, headers ma
 	return clientHTTP.Do(req)
 }
 
+func NewApiPlatformClient(endpointURL, clientID, clientTokenBlock string) *ApiPlatformClient {
+	return &ApiPlatformClient{
+		EndpointURL:      endpointURL,
+		ClientID:         clientID,
+		ClientTokenBlock: clientTokenBlock,
+	}
+}
+
 // # Payload Crafter for HTTP Basic Auth
 //
 // This function is used to craft the payload for HTTP Basic Auth.
