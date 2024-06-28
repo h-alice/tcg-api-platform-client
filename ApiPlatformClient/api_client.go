@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 )
@@ -76,40 +75,56 @@ func (client *ApiPlatformClient) RequestAccessToken() (string, error) {
 	return client.accessToken, nil // Return the `accessToken`.
 }
 
+// # Request `signBlock` from API Platform.
+//
+// This function is used to request a `signBlock` from API Platform.
+// Every payload body must be signed with the `signBlock` before sending it to the API Platform.
 func (client *ApiPlatformClient) RequestSignBlock() (string, error) {
+
+	// Initial check if the client is not authorized.
 	if client.accessToken == "" {
-		return "", ErrClientUnauthorized
+		return "", ErrClientUnauthorized // Return client unauthorized error.
 	}
 
+	// The endpoint to request the `signBlock`.
 	endpointSB := fmt.Sprintf("%s/tsmpaa/getSignBlock", client.EndpointURL)
 
+	// Create a new HTTP request.
 	req, err := http.NewRequest("GET", endpointSB, nil)
 	if err != nil {
 		return "", err
 	}
+
+	// Set the Authorization header with the `accessToken`.
 	req.Header.Set("Authorization", "Bearer "+client.accessToken)
 
+	// Create a new HTTP client.
 	clientHTTP := &http.Client{}
+
+	// Send the request.
 	resp, err := clientHTTP.Do(req)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // Close the response body after the function ends.
 
+	// Check if the response status code is not OK.
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusUnauthorized {
-			return "", ErrInvalidCredential
+		if resp.StatusCode == http.StatusUnauthorized { // 401 Unauthorized
+			return "", ErrInvalidCredential // Return invalid credential error.
 		}
-		return "", ErrApiPlatformGeneralError
+		return "", ErrApiPlatformGeneralError // TODO: Add more specific error.
 	}
 
+	// Decode the response body to `ApiPlatformSignBlockResponse` struct.
 	sbResponse := new(ApiPlatformSignBlockResponse)
 	if err := json.NewDecoder(resp.Body).Decode(sbResponse); err != nil {
 		return "", err
 	}
 
+	// Set the `signBlock` to the client.
 	client.signBlock = sbResponse.ResponseSignBlock.SignBlock
-	return client.signBlock, nil
+	return client.signBlock, nil // Return the `signBlock`.
 }
 
 func (client *ApiPlatformClient) SignPayload(data []byte) string {
@@ -163,6 +178,5 @@ func NewApiPlatformClient(endpointURL, clientID, clientTokenBlock string) *ApiPl
 // This function is used to craft the payload for HTTP Basic Auth.
 func basicAuthCredentialCrafter(clientID, clientTokenBlock string) string {
 	credential := fmt.Sprintf("%s:%s", clientID, clientTokenBlock)
-	log.Printf("credential: %v", credential)
 	return base64.StdEncoding.EncodeToString([]byte(credential))
 }
