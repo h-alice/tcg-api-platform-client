@@ -179,6 +179,9 @@ func (client *ApiPlatformClient) SendRequest(endpoint, method string, headers ma
 	return clientHTTP.Do(req) // Send the request.
 }
 
+// # New API Platform Client
+//
+// This function is used to create a new API Platform client.
 func NewApiPlatformClient(endpointURL, clientID, clientTokenBlock string) *ApiPlatformClient {
 	return &ApiPlatformClient{
 		EndpointURL:      endpointURL,
