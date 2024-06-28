@@ -1,3 +1,3 @@
-module api_platform_client
+module github.com/h-alice/tcg-api-platform-client
 
 go 1.22.1
