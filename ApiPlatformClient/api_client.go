@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -28,45 +27,53 @@ type ApiPlatformClient struct {
 // This function is used to request a `accessToken` from API Platform.
 // Note that every token is expired after a day.
 func (client *ApiPlatformClient) RequestAccessToken() (string, error) {
+
+	// The endpoint to request the `accessToken`.
 	endpointAccessToken := fmt.Sprintf("%s/tsmpaa/oauth/token", client.EndpointURL)
 
-	payload := url.Values{}
-	payload.Set("grant_type", "client_credentials")
+	payload := url.Values{}                         // The payload to request the `accessToken`.
+	payload.Set("grant_type", "client_credentials") // Add proper grant type.
 
+	// Create a new HTTP request.
 	req, err := http.NewRequest("POST", endpointAccessToken, bytes.NewBufferString(payload.Encode()))
 	if err != nil {
 		return "", err
 	}
 
+	// Set the proper headers.
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Set the Authorization header with encoded `clientID` and `clientTokenBlock`.
 	req.Header.Set("Authorization", "Basic "+basicAuthCredentialCrafter(client.ClientID, client.ClientTokenBlock))
 
+	// Create a new HTTP client.
 	http_client := &http.Client{}
 
+	// Send the request.
 	resp, err := http_client.Do(req)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // Close the response body after the function ends.
 
+	// Check if the response status code is not OK.
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusUnauthorized {
-
-			var response_text bytes.Buffer
-			io.Copy(&response_text, resp.Body)
-			log.Printf("response_text: %v", response_text.String())
-			return "", ErrInvalidCredential
+		if resp.StatusCode == http.StatusUnauthorized { // 401 Unauthorized
+			return "", ErrInvalidCredential // Return invalid credential error.
 		}
-		return "", ErrApiPlatformGeneralError
+		return "", ErrApiPlatformGeneralError // TODO: Add more specific error.
 	}
 
+	// Decode the response body to `ApiPlatformTokenResponse` struct.
 	tokenResponse := new(ApiPlatformTokenResponse)
 	if err := json.NewDecoder(resp.Body).Decode(tokenResponse); err != nil {
 		return "", err
 	}
 
+	// Set the `accessToken` to the client.
 	client.accessToken = tokenResponse.AccessToken
-	return client.accessToken, nil
+
+	return client.accessToken, nil // Return the `accessToken`.
 }
 
 func (client *ApiPlatformClient) RequestSignBlock() (string, error) {
