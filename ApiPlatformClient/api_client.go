@@ -127,42 +127,56 @@ func (client *ApiPlatformClient) RequestSignBlock() (string, error) {
 	return client.signBlock, nil // Return the `signBlock`.
 }
 
+// # Sign Payload
+//
+// This function is used to sign the payload with the `signBlock`.
+// This function is expected to be used after client authorized and `signBlock` is generated.
 func (client *ApiPlatformClient) SignPayload(data []byte) string {
 	signBody := append([]byte(client.signBlock), data...)
 	signature := sha256.Sum256(signBody)
 	return fmt.Sprintf("%x", signature)
 }
 
+// # Send Request
+//
+// This function is used to send a request via the API Platform.
+// This function designed to imitate the `requests.Request` function in Python.
 func (client *ApiPlatformClient) SendRequest(endpoint, method string, headers map[string]string, jsonPayload, data interface{}) (*http.Response, error) {
-	if client.accessToken == "" {
-		return nil, ErrClientUnauthorized
+	if client.accessToken == "" { // Initial check if the client is not authorized.
+		return nil, ErrClientUnauthorized // Return client unauthorized error.
 	}
 
-	if client.signBlock == "" {
-		return nil, ErrClientUnauthorized
+	if client.signBlock == "" { // Initial check if the `signBlock` is not generated.
+		return nil, ErrClientUnauthorized // Return client unauthorized error.
 	}
 
-	jsonData, err := json.Marshal(jsonPayload)
+	// Payload cfrating.
+	jsonData, err := json.Marshal(jsonPayload) // Marshal the JSON payload.
 	if err != nil {
 		return nil, err
 	}
 
+	// Sign the payload.
 	signature := client.SignPayload(jsonData)
 
+	// Create a new HTTP request.
 	req, err := http.NewRequest(method, endpoint, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return nil, err
 	}
 
+	// Set the Authorization header with the `accessToken`.
 	req.Header.Set("Authorization", "Bearer "+client.accessToken)
 	req.Header.Set("SignCode", signature)
 
+	// Add additional header fields.
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
 
+	// Create a new HTTP client.
 	clientHTTP := &http.Client{}
-	return clientHTTP.Do(req)
+	return clientHTTP.Do(req) // Send the request.
 }
 
 func NewApiPlatformClient(endpointURL, clientID, clientTokenBlock string) *ApiPlatformClient {
