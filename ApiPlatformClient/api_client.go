@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"net/url"
 )
@@ -28,14 +30,20 @@ type ApiPlatformClient struct {
 func (client *ApiPlatformClient) RequestAccessToken() (string, error) {
 	endpointAccessToken := fmt.Sprintf("%s/tsmpaa/oauth/token", client.EndpointURL)
 
-	header := http.Header{}
-	header.Set("Content-Type", "application/x-www-form-urlencoded")
-	header.Set("Authorization", "Basic "+basicAuthCredentialCrafter(client.ClientID, client.ClientTokenBlock))
-
 	payload := url.Values{}
 	payload.Set("grant_type", "client_credentials")
 
-	resp, err := http.PostForm(endpointAccessToken, payload)
+	req, err := http.NewRequest("POST", endpointAccessToken, bytes.NewBufferString(payload.Encode()))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Authorization", "Basic "+basicAuthCredentialCrafter(client.ClientID, client.ClientTokenBlock))
+
+	http_client := &http.Client{}
+
+	resp, err := http_client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -43,6 +51,10 @@ func (client *ApiPlatformClient) RequestAccessToken() (string, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.StatusCode == http.StatusUnauthorized {
+
+			var response_text bytes.Buffer
+			io.Copy(&response_text, resp.Body)
+			log.Printf("response_text: %v", response_text.String())
 			return "", ErrInvalidCredential
 		}
 		return "", ErrApiPlatformGeneralError
@@ -144,5 +156,6 @@ func NewApiPlatformClient(endpointURL, clientID, clientTokenBlock string) *ApiPl
 // This function is used to craft the payload for HTTP Basic Auth.
 func basicAuthCredentialCrafter(clientID, clientTokenBlock string) string {
 	credential := fmt.Sprintf("%s:%s", clientID, clientTokenBlock)
+	log.Printf("credential: %v", credential)
 	return base64.StdEncoding.EncodeToString([]byte(credential))
 }
