@@ -1,5 +1,6 @@
 package api_platform_client
 
+// # Response structure for the API Platform Token request
 type ApiPlatformTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
@@ -9,16 +10,17 @@ type ApiPlatformTokenResponse struct {
 	Jti         string `json:"jti"` // Unknown
 }
 
-type ApiPlatformSignBlockResHeaderResponse struct {
+type apiPlatformSignBlockResHeaderResponse struct {
 	ReturnCode    string `json:"rtnCode"`
 	ReturnMessage string `json:"rtnMsg"`
 }
 
-type ApiPlatformSignBlockResResponse struct {
+type apiPlatformSignBlockResResponse struct {
 	SignBlock string `json:"signBlock"`
 }
 
+// # Response structure for the API Platform SignBlock request
 type ApiPlatformSignBlockResponse struct {
-	ResponseHeader    ApiPlatformSignBlockResHeaderResponse `json:"ResHeader"`
-	ResponseSignBlock ApiPlatformSignBlockResResponse       `json:"Res_getSignBlock"`
+	ResponseHeader    apiPlatformSignBlockResHeaderResponse `json:"ResHeader"`
+	ResponseSignBlock apiPlatformSignBlockResResponse       `json:"Res_getSignBlock"`
 }
