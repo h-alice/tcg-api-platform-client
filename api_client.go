@@ -141,7 +141,7 @@ func (client *ApiPlatformClient) SignPayload(data []byte) string {
 //
 // This function is used to send a request via the API Platform.
 // This function designed to imitate the `requests.Request` function in Python.
-func (client *ApiPlatformClient) SendRequest(endpoint, method string, headers map[string]string, jsonPayload, data interface{}) (*http.Response, error) {
+func (client *ApiPlatformClient) SendRequest(endpoint, method string, headers map[string]string, json interface{}, data map[string]string) (*http.Response, error) {
 	if client.accessToken == "" { // Initial check if the client is not authorized.
 		return nil, ErrClientUnauthorized // Return client unauthorized error.
 	}
@@ -151,16 +151,47 @@ func (client *ApiPlatformClient) SendRequest(endpoint, method string, headers ma
 	}
 
 	// Payload cfrating.
-	jsonData, err := json_.Marshal(jsonPayload) // Marshal the JSON payload.
+	rawJson, err := json_.Marshal(json) // Marshal the JSON payload.
 	if err != nil {
 		return nil, err
 	}
 
+	rawData := url.Values{}
+	for key, value := range data {
+		rawData.Set(key, value)
+	}
+
 	// Sign the payload.
-	signature := client.SignPayload(jsonData)
+	signature := client.SignPayload(rawJson)
 
 	// Create a new HTTP request.
-	req, err := http.NewRequest(method, endpoint, bytes.NewBuffer(jsonData))
+	req := new(http.Request)
+
+	// Craft the body of the request.
+	// The crafting rule follows the Python `requests.Request` function.
+	// If the `data` field is not empty, then the `json` field will be ignored.
+	if len(data) > 0 { // If the `data` field is not empty, then `json` field will be ignored.
+
+		// New request with the `data` field.
+		req, err = http.NewRequest(method, endpoint, bytes.NewBufferString(rawData.Encode()))
+
+		// Set the Content-Type header to `application/x-www-form-urlencoded`.
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	} else if json != nil { // If the `json` field is not nil, then the payload will be set to the `json` field.
+
+		// New request with the `json` field.
+		req, err = http.NewRequest(method, endpoint, bytes.NewBuffer(rawJson))
+
+		// Set the Content-Type header to `application/json`.
+		req.Header.Set("Content-Type", "application/json")
+
+	} else { // If both `json` and `data` fields are empty, then the payload will be nil.
+
+		// New request.
+		req, err = http.NewRequest(method, endpoint, nil)
+
+	}
 	if err != nil {
 		return nil, err
 	}
