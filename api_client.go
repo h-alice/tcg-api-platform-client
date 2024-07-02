@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
+	json_ "encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -65,7 +65,7 @@ func (client *ApiPlatformClient) RequestAccessToken() (string, error) {
 
 	// Decode the response body to `ApiPlatformTokenResponse` struct.
 	tokenResponse := new(ApiPlatformTokenResponse)
-	if err := json.NewDecoder(resp.Body).Decode(tokenResponse); err != nil {
+	if err := json_.NewDecoder(resp.Body).Decode(tokenResponse); err != nil {
 		return "", err
 	}
 
@@ -118,7 +118,7 @@ func (client *ApiPlatformClient) RequestSignBlock() (string, error) {
 
 	// Decode the response body to `ApiPlatformSignBlockResponse` struct.
 	sbResponse := new(ApiPlatformSignBlockResponse)
-	if err := json.NewDecoder(resp.Body).Decode(sbResponse); err != nil {
+	if err := json_.NewDecoder(resp.Body).Decode(sbResponse); err != nil {
 		return "", err
 	}
 
@@ -151,7 +151,7 @@ func (client *ApiPlatformClient) SendRequest(endpoint, method string, headers ma
 	}
 
 	// Payload cfrating.
-	jsonData, err := json.Marshal(jsonPayload) // Marshal the JSON payload.
+	jsonData, err := json_.Marshal(jsonPayload) // Marshal the JSON payload.
 	if err != nil {
 		return nil, err
 	}
